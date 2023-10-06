@@ -20,6 +20,7 @@ services:
     volumes:
       - db-data:/var/lib/mysql
     environment:
+      MYSQL_DATABASE: "symfony_db"
       MYSQL_ROOT_PASSWORD: "ChangeMeLater"
     networks:
       - dev
@@ -43,9 +44,9 @@ services:
     container_name: mercure_docker
     environment:
       # Uncomment the following line to disable HTTPS
-      #SERVER_NAME: ":80"
-      MERCURE_PUBLISHER_JWT_KEY: "!ChangeMe!"
-      MERCURE_SUBSCRIBER_JWT_KEY: "!ChangeMe!"
+      SERVER_NAME: ":80"
+      MERCURE_PUBLISHER_JWT_KEY: "!ChangeMe!12345678912345678cacacacdlkjghfdlkjglfdksjhgfd"
+      MERCURE_SUBSCRIBER_JWT_KEY: "!ChangeMe!12345678912345678cacacacdlkjghfdlkjglfdksjhgfd"
       MERCURE_EXTRA_DIRECTIVES: cors_origins http://localhost:3000
       #cors_origins http://localhost:8245
     #                anonymous
