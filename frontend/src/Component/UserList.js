@@ -4,6 +4,7 @@ import useBackendPing from "../Hook/useBackendPing";
 
 export default function UserList() {
   const [userList, setUserList] = useState([]);
+  const [allMessage , setAllMssage] = useState([])
   const [isOpen, setIsOpen] = useState({});
   const [user, setUser] = useState("");
   const [message, setMessage] = useState("");
@@ -14,7 +15,6 @@ export default function UserList() {
   const submitMessagePrivate = async (e) => {
     e.preventDefault();
     const userId = e.target[0].value;
-    backendPing(userId).then((data) => console.log(data));
 
     try {
       let res = await fetch("", {
@@ -39,7 +39,6 @@ export default function UserList() {
   const submitMessageAll = async (e) => {
     e.preventDefault();
     const userId = e.target[0].value;
-    backendPing(userId).then((data) => console.log(data));
 
     try {
       let res = await fetch("", {
@@ -61,7 +60,23 @@ export default function UserList() {
     }
   };
 
+
+  useEffect(() => {
+
+    fetch('url get all msg')
+      .then((response) => response.json())
+      .then((data) => {
+        setAllMssage(data);
+      })
+      .catch((error) => {
+        console.log('Une erreur est survenue');
+        console.error(error);
+      });
+  }, []);
+
   const handleClick = (userId) => {
+    backendPing(userId).then((data) => console.log(data));
+
     setIsOpen((prevState) => ({
       ...prevState,
       [userId]: !prevState[userId],
@@ -116,7 +131,10 @@ export default function UserList() {
 
               {isOpen[user.id] ? (
                 <div key={user.id}>
-                  <form className="w-75 mx-auto mt-3" onSubmit={submitMessagePrivate}>
+                  <form
+                    className="w-75 mx-auto mt-3"
+                    onSubmit={submitMessagePrivate}
+                  >
                     <div className="w-75 h-75 overflow-auto">{}</div>
                     <div class="input-group mb-3">
                       <input
@@ -140,19 +158,29 @@ export default function UserList() {
           </div>
         ))}
       </div>
-      <div className="w-50">
+      <div className="w-75">
         <h1 className="m-5 text-center">Chat Général</h1>
-        <form onSubmit={submitMessageAll} className="w-75 input-group mx-auto">
-          <input
-            type="text"
-            class="form-control"
-            placeholder="Écrire un message"
-            aria-describedby="basic-addon2"
-          />
-          <div class="input-group-append">
-            <button class="btn btn-outline-secondary" type="submit">
-              Envoyé
-            </button>
+        <form
+          onSubmit={submitMessageAll}
+          className="d-flex flex-column w-75 h-50 input-group mx-auto"
+        >
+          <div className="overflow-auto w-100 h-75 p-3 border">
+            {allMessage.map((message , user => {
+              <p>{user} : {message}</p>
+            }))}
+          </div>
+          <div className="d-flex">
+            <input
+              type="text"
+              class="form-control"
+              placeholder="Écrire un message"
+              aria-describedby="basic-addon2"
+            />
+            <div class="input-group-append">
+              <button class="btn btn-outline-secondary" type="submit">
+                Envoyé
+              </button>
+            </div>
           </div>
         </form>
       </div>
