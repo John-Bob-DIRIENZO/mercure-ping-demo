@@ -1,52 +1,189 @@
-import {useEffect, useState} from "react";
+import { useEffect, useState } from "react";
 import useGetUserList from "../Hook/useGetUserList";
 import useBackendPing from "../Hook/useBackendPing";
 
 export default function UserList() {
-    const [userList, setUserList] = useState([]);
+  const [userList, setUserList] = useState([]);
+  const [allMessage , setAllMssage] = useState([])
+  const [isOpen, setIsOpen] = useState({});
+  const [user, setUser] = useState("");
+  const [message, setMessage] = useState("");
 
-    const getUserList = useGetUserList();
-    const backendPing = useBackendPing();
+  const getUserList = useGetUserList();
+  const backendPing = useBackendPing();
 
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        const userId = e.target[0].value;
-        backendPing(userId).then(data => console.log(data))
+  const submitMessagePrivate = async (e) => {
+    e.preventDefault();
+    const userId = e.target[0].value;
+
+    try {
+      let res = await fetch("", {
+        method: "POST",
+        body: JSON.stringify({
+          user: user,
+          message: message,
+        }),
+      });
+      let resJson = await res.json();
+      if (res.status === 200) {
+        setUser("");
+        setMessage("User created successfully");
+      } else {
+        setMessage("Some error occured");
+      }
+    } catch (err) {
+      console.log(err);
     }
+  };
 
-    const handleMessage = (e) => {
-        document.querySelector('h1').insertAdjacentHTML('afterend', '<div class="alert alert-success w-75 mx-auto">Ping !</div>');
-        window.setTimeout(() => {
-            const $alert = document.querySelector('.alert');
-            $alert.parentNode.removeChild($alert);
-        }, 2000);
-        console.log(JSON.parse(e.data));
+  const submitMessageAll = async (e) => {
+    e.preventDefault();
+    const userId = e.target[0].value;
+
+    try {
+      let res = await fetch("", {
+        method: "POST",
+        body: JSON.stringify({
+          user: user,
+          message: message,
+        }),
+      });
+      let resJson = await res.json();
+      if (res.status === 200) {
+        setUser("");
+        setMessage("User created successfully");
+      } else {
+        setMessage("Some error occured");
+      }
+    } catch (err) {
+      console.log(err);
     }
+  };
 
-    useEffect(() => {
-        getUserList().then(data => setUserList(data.users));
 
-        const url = new URL('http://localhost:9090/.well-known/mercure');
-        url.searchParams.append('topic', 'https://example.com/my-private-topic');
+  useEffect(() => {
 
-        const eventSource = new EventSource(url, {withCredentials: true});
-        eventSource.onmessage = handleMessage;
+    fetch('url get all msg')
+      .then((response) => response.json())
+      .then((data) => {
+        setAllMssage(data);
+      })
+      .catch((error) => {
+        console.log('Une erreur est survenue');
+        console.error(error);
+      });
+  }, []);
 
-        return () => {
-            eventSource.close()
-        }
+  const handleClick = (userId) => {
+    backendPing(userId).then((data) => console.log(data));
 
-    }, [])
+    setIsOpen((prevState) => ({
+      ...prevState,
+      [userId]: !prevState[userId],
+    }));
+  };
 
-    return (
-        <div>
-            <h1 className='m-5 text-center'>Ping a user</h1>
-            {userList.map((user) => (
-                <form className='w-75 mx-auto mb-3' onSubmit={handleSubmit}>
-                    <button className='btn btn-dark w-100' type='submit' value={user.id}>{user.username}</button>
-                </form>
+  const handleMessage = (e) => {
+    const data = JSON.parse(e.data);
+    const userName = data.user;
 
-            ))}
-        </div>
-    )
+    document
+      .querySelector("h1")
+      .insertAdjacentHTML(
+        "afterend",
+        `<div class="alert alert-success w-75 mx-auto">Ping ${userName}</div>`
+      );
+    window.setTimeout(() => {
+      const $alert = document.querySelector(".alert");
+      $alert.parentNode.removeChild($alert);
+    }, 2000);
+  };
+
+  useEffect(() => {
+    getUserList().then((data) => setUserList(data.users));
+
+    const url = new URL("http://localhost:9090/.well-known/mercure");
+    url.searchParams.append("topic", "https://example.com/my-private-topic");
+
+    const eventSource = new EventSource(url, { withCredentials: true });
+    eventSource.onmessage = handleMessage;
+
+    return () => {
+      eventSource.close();
+    };
+  }, []);
+
+  return (
+    <div className="w-100 d-flex">
+      <div className="w-75">
+        <h1 className="m-5 text-center">Hello</h1>
+        {userList.map((user) => (
+          <div key={user.id} className="">
+            <div className="w-75 mx-auto mb-3" onSubmit={submitMessagePrivate}>
+              <button
+                onClick={() => handleClick(user.id)}
+                className="btn btn-dark w-100"
+                type="submit"
+                value={user.id}
+              >
+                {user.username}
+              </button>
+
+              {isOpen[user.id] ? (
+                <div key={user.id}>
+                  <form
+                    className="w-75 mx-auto mt-3"
+                    onSubmit={submitMessagePrivate}
+                  >
+                    <div className="w-75 h-75 overflow-auto">{}</div>
+                    <div class="input-group mb-3">
+                      <input
+                        type="text"
+                        value={message}
+                        onChange={(e) => setMessage(e.target.value)}
+                        class="form-control"
+                        placeholder="Écrire un message"
+                        aria-describedby="basic-addon2"
+                      />
+                      <div class="input-group-append">
+                        <button type="submit" class="btn btn-outline-secondary">
+                          Envoyé
+                        </button>
+                      </div>
+                    </div>
+                  </form>
+                </div>
+              ) : null}
+            </div>
+          </div>
+        ))}
+      </div>
+      <div className="w-75">
+        <h1 className="m-5 text-center">Chat Général</h1>
+        <form
+          onSubmit={submitMessageAll}
+          className="d-flex flex-column w-75 h-50 input-group mx-auto"
+        >
+          <div className="overflow-auto w-100 h-75 p-3 border">
+            {allMessage.map((message , user => {
+              <p>{user} : {message}</p>
+            }))}
+          </div>
+          <div className="d-flex">
+            <input
+              type="text"
+              class="form-control"
+              placeholder="Écrire un message"
+              aria-describedby="basic-addon2"
+            />
+            <div class="input-group-append">
+              <button class="btn btn-outline-secondary" type="submit">
+                Envoyé
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
 }
