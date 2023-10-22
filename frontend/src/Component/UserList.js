@@ -4,7 +4,7 @@ import useBackendPing from "../Hook/useBackendPing";
 
 export default function UserList() {
   const [userList, setUserList] = useState([]);
-  const [allMessage , setAllMssage] = useState([])
+  const [allMessage, setAllMssage] = useState([]);
   const [isOpen, setIsOpen] = useState({});
   const [user, setUser] = useState("");
   const [message, setMessage] = useState("");
@@ -60,16 +60,14 @@ export default function UserList() {
     }
   };
 
-
   useEffect(() => {
-
-    fetch('url get all msg')
+    fetch("url get all msg")
       .then((response) => response.json())
       .then((data) => {
         setAllMssage(data);
       })
       .catch((error) => {
-        console.log('Une erreur est survenue');
+        console.log("Une erreur est survenue");
         console.error(error);
       });
   }, []);
@@ -100,8 +98,16 @@ export default function UserList() {
   };
 
   useEffect(() => {
-    getUserList().then((data) => setUserList(data.users));
+    const currentUser = sessionStorage.getItem("user");
 
+    getUserList().then((data) => {
+      const userListArray = Object.values(data.users);
+      const filteredUserList = userListArray.filter(
+        (user) => user.username !== currentUser
+      );
+
+      setUserList(filteredUserList);
+    });
     const url = new URL("http://localhost:9090/.well-known/mercure");
     url.searchParams.append("topic", "https://example.com/my-private-topic");
 
@@ -165,9 +171,14 @@ export default function UserList() {
           className="d-flex flex-column w-75 h-50 input-group mx-auto"
         >
           <div className="overflow-auto w-100 h-75 p-3 border">
-            {allMessage.map((message , user => {
-              <p>{user} : {message}</p>
-            }))}
+            {allMessage.map(
+              (message,
+              (user) => {
+                <p>
+                  {user} : {message}
+                </p>;
+              })
+            )}
           </div>
           <div className="d-flex">
             <input
