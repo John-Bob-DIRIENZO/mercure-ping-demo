@@ -1,76 +1,35 @@
 import { useEffect, useState } from "react";
 import useGetUserList from "../Hook/useGetUserList";
 import useBackendPing from "../Hook/useBackendPing";
+import useBackendMessage from "../Hook/useBackendMessage";
+import User from "./User";
 
 export default function UserList() {
   const [userList, setUserList] = useState([]);
   const [allMessage, setAllMssage] = useState([]);
   const [isOpen, setIsOpen] = useState({});
-  const [user, setUser] = useState("");
-  const [message, setMessage] = useState("");
+  const [sentMessages, setSentMessages] = useState({});
+  const [senterMessages, setSenterMessages] = useState({});
 
   const getUserList = useGetUserList();
   const backendPing = useBackendPing();
+  const backendMessage = useBackendMessage();
+  const currentUser = sessionStorage.getItem("user");
 
   const submitMessagePrivate = async (e) => {
+    const message = e.target[0].value;
+    const userId = e.target[0].dataset.userid;
+    const data = { message: message, user: currentUser };
+    backendMessage(userId, data).then((data) => {
+      setSenterMessages(currentUser);
+      setSentMessages((prevMessages) => ({
+        ...prevMessages,
+        [userId]: [...(prevMessages[userId] || []), message],
+      }));
+    });
+
     e.preventDefault();
-    const userId = e.target[0].value;
-
-    try {
-      let res = await fetch("", {
-        method: "POST",
-        body: JSON.stringify({
-          user: user,
-          message: message,
-        }),
-      });
-      let resJson = await res.json();
-      if (res.status === 200) {
-        setUser("");
-        setMessage("User created successfully");
-      } else {
-        setMessage("Some error occured");
-      }
-    } catch (err) {
-      console.log(err);
-    }
   };
-
-  const submitMessageAll = async (e) => {
-    e.preventDefault();
-    const userId = e.target[0].value;
-
-    try {
-      let res = await fetch("", {
-        method: "POST",
-        body: JSON.stringify({
-          user: user,
-          message: message,
-        }),
-      });
-      let resJson = await res.json();
-      if (res.status === 200) {
-        setUser("");
-        setMessage("User created successfully");
-      } else {
-        setMessage("Some error occured");
-      }
-    } catch (err) {
-      console.log(err);
-    }
-  };
-
-  useEffect(() => {
-    fetch("url get all msg")
-      .then((response) => response.json())
-      .then((data) => {
-        setAllMssage(data);
-      })
-      .catch((error) => {
-        console.log("Une erreur est survenue");
-        console.error(error);
-      });
-  }, []);
 
   const handleClick = (userId) => {
     backendPing(userId).then((data) => console.log(data));
@@ -83,8 +42,23 @@ export default function UserList() {
 
   const handleMessage = (e) => {
     const data = JSON.parse(e.data);
+    if (data.content) {
+      const userIdMatch = userList.find(
+        (user) => user.username === data.content.message.user
+      );
+      console.log(data.content.message.user);
+      setSenterMessages(data.content.message.user);
+      if (userIdMatch) {
+        setSentMessages((prevMessages) => ({
+          ...prevMessages,
+          [userIdMatch.id]: [
+            ...(prevMessages[userIdMatch.id] || []),
+            data.content.message.message,
+          ],
+        }));
+      }
+    }
     const userName = data.user;
-
     document
       .querySelector("h1")
       .insertAdjacentHTML(
@@ -98,8 +72,6 @@ export default function UserList() {
   };
 
   useEffect(() => {
-    const currentUser = sessionStorage.getItem("user");
-
     getUserList().then((data) => {
       const userListArray = Object.values(data.users);
       const filteredUserList = userListArray.filter(
@@ -122,49 +94,28 @@ export default function UserList() {
   return (
     <div className="w-100 d-flex">
       <div className="w-75">
-        <h1 className="m-5 text-center">Hello</h1>
+        <h1 className="m-5 text-center">Hello {currentUser}</h1>
         {userList.map((user) => (
-          <div key={user.id} className="">
-            <div className="w-75 mx-auto mb-3" onSubmit={submitMessagePrivate}>
-              <button
-                onClick={() => handleClick(user.id)}
-                className="btn btn-dark w-100"
-                type="submit"
-                value={user.id}
-              >
-                {user.username}
-              </button>
-
-              {isOpen[user.id] ? (
-                <div key={user.id}>
-                  <form
-                    className="w-75 mx-auto mt-3"
-                    onSubmit={submitMessagePrivate}
-                  >
-                    <div className="w-75 h-75 overflow-auto">{}</div>
-                    <div class="input-group mb-3">
-                      <input
-                        type="text"
-                        value={message}
-                        onChange={(e) => setMessage(e.target.value)}
-                        class="form-control"
-                        placeholder="Écrire un message"
-                        aria-describedby="basic-addon2"
-                      />
-                      <div class="input-group-append">
-                        <button type="submit" class="btn btn-outline-secondary">
-                          Envoyé
-                        </button>
-                      </div>
-                    </div>
-                  </form>
-                </div>
-              ) : null}
-            </div>
+          <div key={user.id}>
+            <User
+              user={user}
+              handleClick={handleClick}
+              isOpen={isOpen}
+              submitMessagePrivate={submitMessagePrivate}
+            />
+            {sentMessages[user.id] && (
+              <div className="m-5 text-center">
+                {sentMessages[user.id].map((message, index) => (
+                  <span key={index}>
+                    {senterMessages}: {message}
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
         ))}
       </div>
-      <div className="w-75">
+      {/* <div className="w-75">
         <h1 className="m-5 text-center">Chat Général</h1>
         <form
           onSubmit={submitMessageAll}
@@ -194,7 +145,7 @@ export default function UserList() {
             </div>
           </div>
         </form>
-      </div>
+      </div> */}
     </div>
   );
 }
