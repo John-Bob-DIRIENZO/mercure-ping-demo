@@ -14,11 +14,15 @@ export default function Login() {
   const [loggedUser, setLoggedUser] = useContext(userContext);
 
   const handleUsername = (e) => {
-    setUsername(e.target.value);
+    setUsername(capitalizeFirstLetter(e.target.value));
   };
 
   const handlePassword = (e) => {
     setPassword(e.target.value);
+  };
+
+  const capitalizeFirstLetter = (str) => {
+    return str.charAt(0).toUpperCase() + str.slice(1);
   };
 
   const handleSubmit = (e) => {
