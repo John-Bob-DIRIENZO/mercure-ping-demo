@@ -2,7 +2,7 @@ import data from "bootstrap/js/src/dom/data";
 
 export default function useGetJWT() {
 
-    return function (username, password) {
+    return async function (username, password) {
         const credentials = btoa(`${username}:${password}`);
 
         return fetch('http://localhost:8245/login', {

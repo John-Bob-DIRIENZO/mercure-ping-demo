@@ -1,7 +1,7 @@
 export default function useBackendMessage() {
-  return function (toUserId, messageContent) {
+  return async function (toUserId, messageContent) {
     console.log(messageContent);
-    return fetch(`http://localhost:8245/send-message/${toUserId}`, {
+    return await fetch(`http://localhost:8245/send-message/${toUserId}`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
