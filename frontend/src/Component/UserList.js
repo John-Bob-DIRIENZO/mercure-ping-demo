@@ -3,17 +3,16 @@ import useGetUserList from "../Hook/useGetUserList";
 import useBackendPing from "../Hook/useBackendPing";
 import useBackendMessage from "../Hook/useBackendMessage";
 import User from "./User";
+import { Link } from "react-router-dom";
 
 export default function UserList() {
   const [userList, setUserList] = useState([]);
-  const [allMessage, setAllMssage] = useState([]);
   const [isOpen, setIsOpen] = useState({});
   const [sentMessages, setSentMessages] = useState({});
-  const [senterMessages, setSenterMessages] = useState({});
-
   const getUserList = useGetUserList();
   const backendPing = useBackendPing();
   const backendMessage = useBackendMessage();
+
   const currentUser = sessionStorage.getItem("user");
 
   const submitMessagePrivate = async (e) => {
@@ -21,10 +20,12 @@ export default function UserList() {
     const userId = e.target[0].dataset.userid;
     const data = { message: message, user: currentUser };
     backendMessage(userId, data).then((data) => {
-      setSenterMessages(currentUser);
       setSentMessages((prevMessages) => ({
         ...prevMessages,
-        [userId]: [...(prevMessages[userId] || []), message],
+        [userId]: [
+          ...(prevMessages[userId] || []),
+          { user: currentUser, message },
+        ],
       }));
     });
 
@@ -46,29 +47,36 @@ export default function UserList() {
       const userIdMatch = userList.find(
         (user) => user.username === data.content.message.user
       );
-      console.log(data.content.message.user);
-      setSenterMessages(data.content.message.user);
+      console.log("out", userIdMatch);
+
       if (userIdMatch) {
+        console.log("int", userIdMatch);
         setSentMessages((prevMessages) => ({
           ...prevMessages,
           [userIdMatch.id]: [
             ...(prevMessages[userIdMatch.id] || []),
-            data.content.message.message,
+            {
+              user: data.content.message.user,
+              message: data.content.message.message,
+            },
           ],
         }));
       }
+    } else {
+      console.log("ping");
+
+      const userName = data.user;
+      document
+        .querySelector("h1")
+        .insertAdjacentHTML(
+          "afterend",
+          `<div class="alert alert-success w-75 mx-auto">Ping ${userName}</div>`
+        );
+      window.setTimeout(() => {
+        const $alert = document.querySelector(".alert");
+        $alert.parentNode.removeChild($alert);
+      }, 2000);
     }
-    const userName = data.user;
-    document
-      .querySelector("h1")
-      .insertAdjacentHTML(
-        "afterend",
-        `<div class="alert alert-success w-75 mx-auto">Ping ${userName}</div>`
-      );
-    window.setTimeout(() => {
-      const $alert = document.querySelector(".alert");
-      $alert.parentNode.removeChild($alert);
-    }, 2000);
   };
 
   useEffect(() => {
@@ -105,9 +113,9 @@ export default function UserList() {
             />
             {sentMessages[user.id] && (
               <div className="m-5 text-center">
-                {sentMessages[user.id].map((message, index) => (
+                {sentMessages[user.id].map((messageObj, index) => (
                   <span key={index}>
-                    {senterMessages}: {message}
+                    {messageObj.user}: {messageObj.message}
                   </span>
                 ))}
               </div>
@@ -115,36 +123,10 @@ export default function UserList() {
           </div>
         ))}
       </div>
-      {/* <div className="w-75">
-        <h1 className="m-5 text-center">Chat Général</h1>
-        <form
-          onSubmit={submitMessageAll}
-          className="d-flex flex-column w-75 h-50 input-group mx-auto"
-        >
-          <div className="overflow-auto w-100 h-75 p-3 border">
-            {allMessage.map(
-              (message,
-              (user) => {
-                <p>
-                  {user} : {message}
-                </p>;
-              })
-            )}
-          </div>
-          <div className="d-flex">
-            <input
-              type="text"
-              class="form-control"
-              placeholder="Écrire un message"
-              aria-describedby="basic-addon2"
-            />
-            <div class="input-group-append">
-              <button class="btn btn-outline-secondary" type="submit">
-                Envoyé
-              </button>
-            </div>
-          </div>
-        </form>
+      {/* <div>
+        <Link to="/all">
+          <button>Chat All Page</button>
+        </Link>
       </div> */}
     </div>
   );
